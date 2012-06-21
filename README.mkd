@@ -1,0 +1,21 @@
+__mitmextract__ extracts the http flows from a pcap file and 
+converts them into a __mitmproxy__ flow dump.
+
+Download
+--------
+
+Source is hosted on github: 
+
+[github.com/cjneasbi/mitmextract](http://github.com/cjneasbi/mitmextract)
+
+
+Requirements
+------------
+
+* [Python](http://www.python.org) 2.7.x.
+* [libmproxy](http://github.com/cortesi/mitmproxy) 0.9 or newer.
+* [netlib](http://github.com/cortesi/netlib)
+* [pynids](http://jon.oberheide.org/pynids/) 0.6.1
+
+__mitmextract__ has only been tested on Linux but should work with
+any platform supporting the above requirements.
