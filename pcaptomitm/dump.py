@@ -5,7 +5,7 @@ Created on Jun 14, 2012
 '''
 import string, urlparse
 
-from netlib import protocol, odict
+from netlib import http, odict
 from libmproxy import flow, proxy
 from StringIO import StringIO
 
@@ -29,9 +29,9 @@ def parse_url(url):
 
 def create_http_request(flowheader, reqbuf):
     sfp = StringIO(reqbuf)
-    method, url, httpversion = protocol.parse_init_http(sfp.readline())
+    method, url, httpversion = http.parse_init_http(sfp.readline())
     host, port, path = parse_url(url)
-    headers = odict.ODictCaseless(protocol.read_headers(sfp))
+    headers = http.read_headers(sfp)
     
     if not host:
         if not headers.get("host"):
@@ -41,8 +41,10 @@ def create_http_request(flowheader, reqbuf):
     if port == None:
         port = flowheader.dport
     
+    # TODO: passing None as the second arg will produce and error if "expect" is in the headers
+    content = http.read_http_body_request(sfp, None, headers, httpversion, None)
     
-    content = protocol.read_http_body(sfp, headers, True, None)
+    #content = http.read_http_body(sfp, headers, True, None)
     return flow.Request(None, httpversion, host, port, "http", \
                         method, path, headers, content, flowheader.ts)
     
@@ -57,20 +59,20 @@ def create_http_response(flowheader, respbuf, request):
     if not len(parts) == 3:
         raise proxy.ProxyError(502, "Invalid server response: %s."%line)
     proto, code, msg = parts
-    httpversion = protocol.parse_http_protocol(proto)
+    httpversion = http.parse_http_protocol(proto)
     if httpversion is None:
         raise proxy.ProxyError(502, "Invalid HTTP version: %s."%httpversion)
     try:
         code = int(code)
     except ValueError:
         raise proxy.ProxyError(502, "Invalid server response: %s."%line)
-    headers = odict.ODictCaseless(protocol.read_headers(sfp))
+    headers = http.read_headers(sfp)
     if code >= 100 and code <= 199:
         return create_http_response(flowheader, respbuf, None)
     if request.method == "HEAD" or code == 204 or code == 304:
         content = ""
     else:
-        content = protocol.read_http_body(sfp, headers, True, None)
+        content = http.read_http_body_response(sfp, headers, True, None)
     return flow.Response(request, httpversion, code, msg, headers, content, None, flowheader.ts)
 
 def dump_flows(http_req, outfilepath):
