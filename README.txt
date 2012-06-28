@@ -12,9 +12,9 @@ Source is hosted on github:
 Requirements
 ------------
 
-* Python_ 2.7.x.
-* libmproxy_ 0.9 or newer.
-* netlib_
+* Python_ 2.7.x
+* libmproxy_ 0.9
+* netlib_ 0.1
 * pynids_ 0.6.1
 
 **mitmextract** has only been tested on Linux but should work with

@@ -5,7 +5,7 @@ Created on Jun 14, 2012
 '''
 import string, urlparse
 
-from netlib import http, odict
+from netlib import http 
 from libmproxy import flow, proxy
 from StringIO import StringIO
 

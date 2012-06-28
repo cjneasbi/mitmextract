@@ -12,9 +12,9 @@ Source is hosted on github:
 Requirements
 ------------
 
-* [Python](http://www.python.org) 2.7.x.
-* [libmproxy](http://github.com/cortesi/mitmproxy) 0.9 or newer.
-* [netlib](http://github.com/cortesi/netlib)
+* [Python](http://www.python.org) 2.7.x
+* [libmproxy](http://github.com/cortesi/mitmproxy) 0.9.
+* [netlib](http://github.com/cortesi/netlib) 0.1
 * [pynids](http://jon.oberheide.org/pynids/) 0.6.1
 
 __mitmextract__ has only been tested on Linux but should work with
