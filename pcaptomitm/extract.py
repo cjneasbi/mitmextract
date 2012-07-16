@@ -114,7 +114,7 @@ def add_reconstructed_flow(h):
         maxlen = len(responses)
         
     if DEBUG and len(requests) != len(responses):
-        print "Unequal number of requests and responses. " + h
+        print "Unequal number of requests and responses. " + str(h)
         print(str(len(requests)) + " " + str(len(responses)) + "\n")
     
     for i in range(maxlen):

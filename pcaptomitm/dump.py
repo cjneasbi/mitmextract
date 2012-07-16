@@ -12,7 +12,7 @@ from StringIO import StringIO
 
 def parse_url(url):
     port = None
-    scheme, netloc, path, params, query, fragment = urlparse.urlparse(url)
+    _, netloc, path, params, query, fragment = urlparse.urlparse(url)
     if ':' in netloc:
         host, port = string.rsplit(netloc, ':', maxsplit=1)
         try:
@@ -91,8 +91,10 @@ def create_flow(flowheader, tup):
     
     if tup[1]:
         req = create_http_request(flowheader, tup[1])
-        
-    if tup[2]:
+    
+    #Only want flows where there is at least a request, ignore extra
+    #responses    
+    if req and tup[2]:
         resp = create_http_response(flowheader, tup[2], req)
         
     if req:
