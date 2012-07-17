@@ -3,7 +3,7 @@ import sys
 import re
 import nids
 
-DEBUG = True
+DEBUG = False
 
 #initialize on every call of extract_flows
 ts = None # request timestamp
@@ -13,7 +13,7 @@ requestcounter = None
 http_req = None # contains data from closed connections
 
 #added $, [, ], and ~ to regex, they exist in some urls
-HTTP_REQ_REGEX = '(GET|POST|HEAD|OPTIONS|PUT|DELETE|TRACE|CONNECT)\s[a-zA-Z0-9/._,;()&?%=:+\-$~\[\]]+\sHTTP/[1-2]\.[0-9]\s'
+HTTP_REQ_REGEX = '(GET|POST|HEAD|OPTIONS|PUT|DELETE|TRACE|CONNECT)\s[a-zA-Z0-9/._,;()&?%=:+\-$~\[\]|]+\sHTTP/[1-2]\.[0-9]\s'
 HTTP_RESP_REGEX = 'HTTP/[1-2]\.[0-9]\s[2-5][0-9][0-9]\s'
 NIDS_END_STATES = (nids.NIDS_CLOSE, nids.NIDS_TIMEOUT, nids.NIDS_RESET)
 
@@ -197,6 +197,13 @@ def handle_tcp_stream(tcp):
         if requestdata.has_key(h) and is_http_request(requestdata[h]) and is_http_response(responsedata[h]):
             k = FlowHeader(ts[h], h[0], h[1], h[2], h[3])
             http_req[k] = add_reconstructed_flow(h)
+        else: 
+            if DEBUG:
+                print "Failed to add flow"
+                print str(h)
+                print "has_key? " + str(requestdata.has_key(h))
+                print "is_http_request? " + str(is_http_request(requestdata[h]))
+                print "is_http_response? " + str(is_http_response(responsedata[h]))
             
         del ts[h]
         del requestdata[h]
@@ -220,7 +227,7 @@ def finalize_http_flows():
 # prints flow headers in timestamp order
 def print_flows(http_req):
     for fh in sorted(http_req.keys(), key=lambda x: x.ts):
-        print str(fh)
+        print str(fh) + " " +str(len(http_req[fh]))
 
 # extracts the http flows from a pcap file
 # returns a dictionary of the reconstructed flows, keys are FlowHeader objects
