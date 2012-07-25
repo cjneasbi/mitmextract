@@ -13,7 +13,7 @@ requestcounter = None
 http_req = None # contains data from closed connections
 
 #added $, [, ], and ~ to regex, they exist in some urls
-HTTP_REQ_REGEX = '(GET|POST|HEAD|OPTIONS|PUT|DELETE|TRACE|CONNECT)\s[a-zA-Z0-9/._,;()&?%=:+\-$~\[\]|]+\sHTTP/[1-2]\.[0-9]\s'
+HTTP_REQ_REGEX = '(GET|POST|HEAD|OPTIONS|PUT|DELETE|TRACE|CONNECT)\s[a-zA-Z0-9/._,;()&?%=:+\-$~\[\]|@]+\sHTTP/[1-2]\.[0-9]\s'
 HTTP_RESP_REGEX = 'HTTP/[1-2]\.[0-9]\s[2-5][0-9][0-9]\s'
 NIDS_END_STATES = (nids.NIDS_CLOSE, nids.NIDS_TIMEOUT, nids.NIDS_RESET)
 

@@ -72,7 +72,7 @@ def create_http_response(flowheader, respbuf, request):
     if request.method == "HEAD" or code == 204 or code == 304:
         content = ""
     else:
-        content = http.read_http_body_response(sfp, headers, True, None)
+        content = http.read_http_body_response(sfp, headers, None)
     return flow.Response(request, httpversion, code, msg, headers, content, None, flowheader.ts)
 
 def dump_flows(http_req, outfilepath):

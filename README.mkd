@@ -13,8 +13,8 @@ Requirements
 ------------
 
 * [Python](http://www.python.org) 2.7.x
-* [libmproxy](http://github.com/cortesi/mitmproxy) 0.9.
-* [netlib](http://github.com/cortesi/netlib) 0.1
+* [libmproxy](http://github.com/cortesi/mitmproxy) (master)
+* [netlib](http://github.com/cortesi/netlib) (master)
 * [pynids](http://jon.oberheide.org/pynids/) 0.6.1
 
 __mitmextract__ has only been tested on Linux but should work with
