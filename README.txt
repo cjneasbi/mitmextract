@@ -23,5 +23,4 @@ any platform supporting the above requirements.
 Caveats
 -------
 
-* Only extracts HTTP flows, there is currently no support for HTTPS.
-* Only extracts IPv4 flows.
+* Only extracts IPv4 HTTP flows.
