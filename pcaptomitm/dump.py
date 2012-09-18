@@ -109,7 +109,10 @@ def create_flows(http_req):
     flows = list()    
     for fh in sorted(http_req.keys(), key=lambda x: x.ts):
         for tup in http_req[fh]:
-            f = create_flow(fh, tup)
-            if f:
-                flows.append(create_flow(fh, tup))
+            try:
+                f = create_flow(fh, tup)
+                if f:
+                    flows.append(create_flow(fh, tup))
+            except Exception as e:
+                print e , fh
     return flows
