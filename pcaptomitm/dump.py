@@ -3,7 +3,7 @@ Created on Jun 14, 2012
 
 @author: cjneasbi
 '''
-import string, urlparse
+import string, urlparse, traceback, sys
 
 from netlib import http 
 from libmproxy import flow, proxy
@@ -113,6 +113,7 @@ def create_flows(http_req):
                 f = create_flow(fh, tup)
                 if f:
                     flows.append(create_flow(fh, tup))
-            except Exception as e:
-                print e , fh
+            except Exception:
+                traceback.print_exc(file=sys.stdout)
+                print fh
     return flows

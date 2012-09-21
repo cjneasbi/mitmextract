@@ -3,6 +3,8 @@ import sys
 import re
 import nids
 
+from . import regex
+
 DEBUG = False
 
 #initialize on every call of extract_flows
@@ -12,13 +14,6 @@ responsedata = None # buffer for responses from open connections
 requestcounter = None
 http_req = None # contains data from closed connections
 
-#added $, [, ], and ~ to regex, they exist in some urls
-#HTTP_REQ_REGEX = '(GET|POST|HEAD|OPTIONS|PUT|DELETE|TRACE|CONNECT)\s[a-zA-Z0-9/._,;()&?%=:+\-$~\[\]|@]+\sHTTP/[1-2]\.[0-9]\s'
-HTTP_REQ_REGEX = '(GET|POST|HEAD|OPTIONS|PUT|DELETE|TRACE|CONNECT)\s\S+\sHTTP/[1-2]\.[0-9]\s'
-
-#added the optional decimal sub-codes because of IIS 7.0 and 7.5 
-#http://support.microsoft.com/kb/943891
-HTTP_RESP_REGEX = 'HTTP/[1-2]\.[0-9]\s[1-5][0-9][0-9](.[0-9][0-9]?)?\s'
 NIDS_END_STATES = (nids.NIDS_CLOSE, nids.NIDS_TIMEOUT, nids.NIDS_RESET)
 
 class FlowHeader(object):
@@ -43,10 +38,76 @@ class FlowHeader(object):
     def __str__(self):
         return self.__repr__()
 
+#http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.6.1
+#finds the ending index of chucked response starting at the index start
+def find_chunk_end(h, start):    
+    matches = re.finditer(regex.END_CHUNK_REGEX, responsedata[h])
+    end_size_line = -1
+    for m in matches:
+        if m.start() > start:
+            #we subtract 2 because if there is no trailer after the
+            #last chuck the first CRLF of the ending double CRLF is
+            #the CRLF at the end of the regex 
+            end_size_line = m.end() - 2
+            break
+    
+    if end_size_line != -1:    
+        matches = re.finditer('\r\n\r\n', responsedata[h])
+        for m in matches:
+            if m.start() >= end_size_line:
+                return m.end()  
+    
+    return None
+
+def get_response_headers(h, start):
+    return get_headers(responsedata, h, start)
+
+def get_request_headers(h, start):
+    return get_headers(requestdata, h, start)
+
+def get_headers(buf, h, start):
+    header_start = None
+    header_end = None
+    matches = re.finditer('\r\n\r\n', responsedata[h])
+    for m in matches:
+        if m.start() > start:
+            header_end = m.end()
+            break
         
+    matches = re.finditer('\r\n', responsedata[h])
+    for m in matches:
+        if m.start() > start:
+            header_start = m.end()
+            break
         
+    if header_start is not None and header_end is not None:
+        return buf[h][header_start:header_end]
+        
+    return None
+    
+def split_responses(h):
+    matches = re.finditer(regex.HTTP_RESP_REGEX, responsedata[h])
+    responses = list()
+    start = -1
+    for m in matches:
+        end = -1
+        if start != -1 and start < m.start():
+            headers = get_response_headers(h, start)                
+            if "Transfer-Encoding: chunked" in headers:
+                end = find_chunk_end(h, start)
+            else :
+                end = m.start()
+                           
+            responses.append(responsedata[h][start : end])
+        else:
+            end = m.start()
+        start = end
+        
+    responses.append(responsedata[h][start:])
+    return responses
+
 def split_requests(h):
-    matches = re.finditer(HTTP_REQ_REGEX, requestdata[h])
+    matches = re.finditer(regex.HTTP_REQ_REGEX, requestdata[h])
     requests = list()
     start = -1
     for m in matches:
@@ -57,21 +118,9 @@ def split_requests(h):
     requests.append(requestdata[h][start:])
     return requests
 
-def split_responses(h):
-    matches = re.finditer(HTTP_RESP_REGEX, responsedata[h])
-    responses = list()
-    start = -1
-    for m in matches:
-        if start != -1:
-            responses.append(responsedata[h][start : m.start()])
-        start = m.start()
-        
-    responses.append(responsedata[h][start:])
-    return responses
-
 
 def is_http_response(data):
-    m = re.search(HTTP_RESP_REGEX, data)
+    m = re.search(regex.HTTP_RESP_REGEX, data)
     if m:
         if m.start() == 0:
             return True
@@ -80,7 +129,7 @@ def is_http_response(data):
 
 
 def is_http_request(data):
-    m = re.search(HTTP_REQ_REGEX, data)
+    m = re.search(regex.HTTP_REQ_REGEX, data)
     if m:
         if m.start() == 0:
             return True
@@ -88,15 +137,34 @@ def is_http_request(data):
     return False
 
 def num_requests(h): 
-    return len(re.findall(HTTP_REQ_REGEX, requestdata[h]))
+    return len(re.findall(regex.HTTP_REQ_REGEX, requestdata[h]))
 
 def num_responses(h):
-    return len(re.findall(HTTP_RESP_REGEX, responsedata[h])) 
+    matches = re.finditer(regex.HTTP_RESP_REGEX, responsedata[h])
+    resp_count = 0
+    start = -1
+    for m in matches:
+        end = -1
+        if start != -1 and start < m.start():
+            headers = get_response_headers(h, start)                
+            if "Transfer-Encoding: chunked" in headers:
+                end = find_chunk_end(h, start)
+            else:
+                end = m.start()
+                           
+            resp_count += 1
+        else:
+            end = m.start()
+        start = end
+        
+    if len(responsedata[h][start:].strip()) > 0:
+        resp_count += 1
+        
+    return resp_count 
 
 # returns a list of tuple, each tuple contains (count, request, response)
 def add_reconstructed_flow(h):
     retval = list()
-    
     requests = list()
     responses = list()
     
@@ -110,7 +178,6 @@ def add_reconstructed_flow(h):
     else:
         responses.append(responsedata[h])
         
-    
     maxlen = 0
     if len(requests) > len(responses):
         maxlen = len(requests)
@@ -218,6 +285,8 @@ def handle_tcp_stream(tcp):
 def finalize_http_flows():
     for h in requestdata.keys():
         k = FlowHeader(ts[h], h[0], h[1], h[2], h[3])
+        if DEBUG:
+            print "Finalizing flow", k
         http_req[k] = add_reconstructed_flow(h)
     
          
@@ -231,7 +300,10 @@ def finalize_http_flows():
 # prints flow headers in timestamp order
 def print_flows(http_req):
     for fh in sorted(http_req.keys(), key=lambda x: x.ts):
-        print str(fh) + " " +str(len(http_req[fh]))
+        print str(fh) + " " + str(len(http_req[fh]))
+        if DEBUG:
+            for tup in http_req[fh]:
+                print tup
 
 # extracts the http flows from a pcap file
 # returns a dictionary of the reconstructed flows, keys are FlowHeader objects
@@ -241,7 +313,7 @@ def extract_flows(pcap_file):
     ts, requestdata, responsedata, requestcounter, http_req = \
         dict([]), dict([]), dict([]), dict([]), dict([])
     
-    
+    nids.param("tcp_workarounds", 1)
     nids.param("pcap_filter", "tcp")        # bpf restrict to TCP only, note
     nids.param("scan_num_hosts", 0)         # disable portscan detection
     nids.chksum_ctl([('0.0.0.0/0', False)]) # disable checksumming
