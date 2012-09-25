@@ -3,12 +3,13 @@ Created on Jun 14, 2012
 
 @author: cjneasbi
 '''
-import string, urlparse, traceback, sys
+import string, urlparse, traceback
 
 from netlib import http 
 from libmproxy import flow, proxy
 from StringIO import StringIO
 
+DEBUG = False
 
 def parse_url(url):
     port = None
@@ -79,6 +80,14 @@ def dump_flows(http_req, outfilepath):
     flows = create_flows(http_req)
     outfile = open(outfilepath,"w")
     write_flows(flows, outfile)
+                
+def filter_flows_by_header(flows, header, value):
+    for f in flows:
+        cnttype = f.request.headers.get(header)
+        if cnttype is not None and value in cnttype:
+            flows.remove(f)
+            if DEBUG:
+                print "Filtered flow with " + header + " = " + value, f.request._get_state()
 
 def write_flows(flows, outfile):
     fw = flow.FlowWriter(outfile)
@@ -97,9 +106,9 @@ def create_flow(flowheader, tup):
     if req and tup[2]:
         resp = create_http_response(flowheader, tup[2], req)
         
-    if req:
+    if req is not None:
         f = flow.Flow(req)
-        if resp:
+        if resp is not None:
             f.response = resp
         return f
     else:
@@ -111,9 +120,9 @@ def create_flows(http_req):
         for tup in http_req[fh]:
             try:
                 f = create_flow(fh, tup)
-                if f:
-                    flows.append(create_flow(fh, tup))
+                if f is not None:
+                    flows.append(f)
             except Exception:
-                traceback.print_exc(file=sys.stdout)
+                print traceback.format_exc()
                 print fh
     return flows

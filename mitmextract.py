@@ -13,11 +13,20 @@ def main():
     
     if options.debug:
         extract.DEBUG = True
-    
+        dump.DEBUG = True
+        
     if len(args) < 2:
         parser.print_help()
-    else:    
+    else:   
         http_req = extract.extract_flows(args[0])
+        flows = dump.create_flows(http_req)
+        
+        if len(options.filters) > 0:
+            for f in options.filters:
+                filt = f.strip().split(":")
+                if len(filt) == 2:
+                    dump.filter_flows_by_header(flows, filt[0], filt[1])
+        
         dump.dump_flows(http_req, args[1])
 
 def config_options():
@@ -28,6 +37,13 @@ def config_options():
             "-d", "--debug",
             action="store_true", dest="debug", default=False,
             help="Display debugging output."
+        )
+        parser.add_option(
+            "-f", "--filter",
+            action="append", dest="filters", default=list(),
+            help="Filter flows whose request headers contain a specified value.  " +  \
+                "Filters must be constructed with the format <header-field>:<header-field-value>.  " + \
+                "Multiple filters may be specified."  
         )
         
         return parser

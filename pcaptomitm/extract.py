@@ -301,9 +301,9 @@ def finalize_http_flows():
 def print_flows(http_req):
     for fh in sorted(http_req.keys(), key=lambda x: x.ts):
         print str(fh) + " " + str(len(http_req[fh]))
-        if DEBUG:
-            for tup in http_req[fh]:
-                print tup
+#        if DEBUG:
+#            for tup in http_req[fh]:
+#                print tup
 
 # extracts the http flows from a pcap file
 # returns a dictionary of the reconstructed flows, keys are FlowHeader objects
