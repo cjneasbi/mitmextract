@@ -27,7 +27,7 @@ def main():
                 if len(filt) == 2:
                     dump.filter_flows_by_header(flows, filt[0], filt[1])
         
-        dump.dump_flows(http_req, args[1])
+        dump.write_flows(flows, open(args[1], "w"))
 
 def config_options():
         parser = OptionParser(
