@@ -105,11 +105,11 @@ def create_flow(flowheader, tup):
     #responses    
     if req and tup[2]:
         resp = create_http_response(flowheader, tup[2], req)
-        
-    if req is not None:
+    
+    #Each flow must have a request and a response    
+    if req is not None and resp is not None:
         f = flow.Flow(req)
-        if resp is not None:
-            f.response = resp
+        f.response = resp
         return f
     else:
         return None;
@@ -123,6 +123,5 @@ def create_flows(http_req):
                 if f is not None:
                     flows.append(f)
             except Exception:
-                print traceback.format_exc()
-                print fh
+                print traceback.format_exc(), fh
     return flows
