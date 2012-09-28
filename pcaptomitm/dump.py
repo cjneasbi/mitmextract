@@ -39,12 +39,15 @@ def create_http_request(flowheader, reqbuf):
             host = flowheader.dstip
         else:
             host = headers.get("host")[0]
+            if ':' in host:
+                host = string.rsplit(host, ':', maxsplit=1)[0]
+            
     if port == None:
         port = flowheader.dport
     
     # TODO: passing None as the second arg will produce and error if "expect" is in the headers
     content = http.read_http_body_request(sfp, None, headers, httpversion, None)
-    
+        
     #content = http.read_http_body(sfp, headers, True, None)
     return flow.Request(None, httpversion, host, port, "http", \
                         method, path, headers, content, flowheader.ts)
