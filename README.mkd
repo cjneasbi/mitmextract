@@ -22,6 +22,7 @@ any platform supporting the above requirements.
 Usage
 -----
 
+<pre>
 Usage: mitmextract.py [options] <pcap_file> <output_file>
 
 Options:
@@ -32,6 +33,7 @@ Options:
                         value.  Filters must be constructed with the format
                         <header-field>:<header-field-value>.  Multiple filters
                         may be specified.
+</pre>
 
 Caveats
 -------
