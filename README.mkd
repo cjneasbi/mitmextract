@@ -31,7 +31,7 @@ Options:
   -f FILTERS, --filter=FILTERS
                         Filter flows whose request headers contain a specified
                         value.  Filters must be constructed with the format
-                        &lt;header-field&gt;:&lt;header-field-value&gt;.  Multiple filters
+                        &lt;header-field&gt;:&lt;header-field-value&gt; .  Multiple filters
                         may be specified.
 </pre>
 

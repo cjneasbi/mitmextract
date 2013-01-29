@@ -6,7 +6,7 @@ Created on Jun 14, 2012
 import string, urlparse, traceback
 
 from netlib import http 
-from libmproxy import flow, proxy
+from libmproxy import flow
 from StringIO import StringIO
 
 DEBUG = False
@@ -50,34 +50,15 @@ def create_http_request(flowheader, reqbuf):
         
     #content = http.read_http_body(sfp, headers, True, None)
     return flow.Request(None, httpversion, host, port, "http", \
-                        method, path, headers, content, flowheader.ts)
-    
+                        method, path, headers, content, flowheader.ts_request_start,
+                        flowheader.ts_request_finish)
+
 def create_http_response(flowheader, respbuf, request):
     sfp = StringIO(respbuf)
-    line = sfp.readline()
-    if not line:
-        raise proxy.ProxyError(502, "Blank server response.")
-    parts = line.strip().split(" ", 2)
-    if len(parts) == 2: # handle missing message gracefully
-        parts.append("")
-    if not len(parts) == 3:
-        raise proxy.ProxyError(502, "Invalid server response: %s."%line)
-    proto, code, msg = parts
-    httpversion = http.parse_http_protocol(proto)
-    if httpversion is None:
-        raise proxy.ProxyError(502, "Invalid HTTP version: %s."%httpversion)
-    try:
-        code = int(code)
-    except ValueError:
-        raise proxy.ProxyError(502, "Invalid server response: %s."%line)
-    headers = http.read_headers(sfp)
-    if code >= 100 and code <= 199:
-        return create_http_response(flowheader, respbuf, None)
-    if request.method == "HEAD" or code == 204 or code == 304:
-        content = ""
-    else:
-        content = http.read_http_body_response(sfp, headers, None)
-    return flow.Response(request, httpversion, code, msg, headers, content, None, flowheader.ts)
+    httpversion, code, msg, headers, content = http.read_response(
+        sfp, request.method, None)
+    return flow.Response(request, httpversion, code, msg, headers, 
+        content, None, flowheader.ts_response_start, flowheader.ts_response_finish)
 
 def dump_flows(http_req, outfilepath):
     flows = create_flows(http_req)
@@ -119,7 +100,7 @@ def create_flow(flowheader, tup):
 
 def create_flows(http_req):
     flows = list()    
-    for fh in sorted(http_req.keys(), key=lambda x: x.ts):
+    for fh in sorted(http_req.keys(), key=lambda x: x.ts_request_start):
         for tup in http_req[fh]:
             try:
                 f = create_flow(fh, tup)
