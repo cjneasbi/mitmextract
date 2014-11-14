@@ -13,8 +13,8 @@ Requirements
 ------------
 
 * Python_ 2.7.x
-* libmproxy_ (master)
-* netlib_ (master)
+* libmproxy_ 0.8
+* netlib_ 0.8
 * pynids_ 0.6.1
 
 **mitmextract** has only been tested on Linux but should work with
